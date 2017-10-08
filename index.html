@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<!--
+Created using JS Bin
+http://jsbin.com
+
+
+-->
+<meta name="robots" content="noindex">
+<html>
+<head>
+<script src="https://code.jquery.com/jquery-2.1.4.js"></script>
+<link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" rel="stylesheet" type="text/css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/1.0.16/vue.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Top Crypto Coins In CAD</title>
+<style id="jsbin-css">
+body{
+  padding: 1em;
+}
+</style>
+</head>
+<body class="container">
+	<h3 align="center">Top Crypto Coins in Canadian Dollars</h3>
+
+	<div class="row">
+		<div class=" col-xs-offset-2 col-xs-8">
+
+			<p align="center">
+				<a href="https://github.com/qinzhuai/top-coins-cad">Yesbit Open Source</a>
+				Refesh every 5 min
+
+			</p>
+		</div>
+	</div>
+  <div id="app">  
+      <div>Name Search: <input type="text" v-model="filter_name"></div>
+
+    <table class="table table-condensed">
+      <tr>
+        <th>#</th>
+        <th>Name</th>
+        <th>Price</th>
+        <th>1Hour </th>
+        <th>24Hour </th>
+        <th>7Day </th>
+        <th>Turnover </th>
+      </tr>
+      <tr v-for="r in rows 
+        | filterBy filter_name in 'name' 
+        | recordLength 'filteredRowCount' 
+        | limitBy countOfPage pageStart ">
+        <td>{{ r.rank }}</td>
+        <td>{{ r.name }}</td>
+        <td>{{ r.price_cad | currency}}</td>
+        <td v-bind:style="getColor(r.percent_change_1h)">
+              <span v-if="r.percent_change_1h > 0">+</span>{{ r.percent_change_1h }}%
+        </td>
+        <td v-bind:style="getColor(r.percent_change_24h)">
+              <span v-if="r.percent_change_24h > 0">+</span>{{ r.percent_change_24h }}%
+        </td>
+        <td v-bind:style="getColor(r.percent_change_7d)">
+              <span v-if="r.percent_change_7d > 0">+</span>{{ r.percent_change_7d }}%
+        </td>
+        <td>{{100*r['24h_volume_cad']/r.market_cap_cad  | percent  }}%</td>
+      </tr>
+    </table> 
+
+    <div class="pagination">
+      <ul>
+        <li v-bind:class="{'disabled': (currPage === 1)}" 
+            @click.prevent="setPage(currPage-1)"><a href="#">Prev</a></li>
+        <li v-for="n in totalPage"
+            v-bind:class="{'active': (currPage === (n+1))}" 
+            @click.prevent="setPage(n+1)"><a href="#">{{n+1}}</a></li>
+        <li v-bind:class="{'disabled': (currPage === totalPage)}" 
+            @click.prevent="setPage(currPage+1)"><a href="#">Next</a></li>
+      </ul>
+    </div>
+    
+    
+    
+  </div>
+  
+<script id="jsbin-javascript">
+Vue.filter('recordLength', function (result, key) {
+  this.$set(key, result.length);
+  return result;
+});
+
+Vue.filter('currency', function (data) {
+    return '$'+parseFloat(data.toString().substring(0,5));
+});
+Vue.filter('percent', function (data) {
+    return parseFloat(data.toString().substring(0,4));
+});
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    rows: [],
+    countOfPage: 50,
+    currPage: 1,
+    filter_name: '',
+    filteredRowCount: null
+  },
+  computed: {
+    pageStart: function(){
+        return (this.currPage - 1) * this.countOfPage;
+      },
+    totalPage: function(){
+      if( this.filter_name.trim() === '' ) {
+        return Math.il(this.rows.length / this.countOfPage);
+      }
+      else{
+        return Math.il(this.filteredRowCount / this.countOfPage);
+      }
+    }
+  },
+  methods: {
+    setPage: function(idx){
+      if( idx <= 0 || idx > this.totalPage ){
+        return;
+      }
+      this.currPage = idx;
+    },
+    
+    getCoins: function(){
+    	var self = this;
+    	$.get('https://api.coinmarketcap.com/v1/ticker/?convert=CAD&limit=450', function(data){
+        self.rows = data;
+        });
+    
+    },
+        /**
+     * Return a CSS color (either red or green) depending on whether or
+     * not the value passed in is negative or positive.
+     */
+    getColor: function (num) {
+      return num > 0 ? "color:green;" : "color:red;";
+    }
+    
+  },
+  created: function(){
+    this.getCoins();   
+  }
+});
+
+setInterval(() => {
+  app.getCoins();
+}, 100*1000);
+//table from http://jsbin.com/bimawidora/1/edit?html,js,output
+</script>
+</body>
+</html>
